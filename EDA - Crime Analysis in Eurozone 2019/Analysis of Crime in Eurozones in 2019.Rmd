@@ -1,0 +1,243 @@
+---
+title: "Crime Analysis in European Countries in Year 2019"
+author: "Clementine Surya"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r global_options, include=FALSE, cache=FALSE}
+knitr::opts_knit$set(root.dir = "/Users/clementine/Desktop/Github/R-Projects/EDA - Crime Analysis in Eurozone 2019")
+library(knitr)
+opts_chunk$set(echo=TRUE, 
+               warning=FALSE, 
+               message=FALSE,
+               cache = FALSE,
+               include = TRUE,
+               results = 'show',
+               error = TRUE)
+```
+
+## Task 1: Manipulation
+
+### 1. Load dataset
+In the code below, I load the dataset of library `EurostatCrime2019.csv`:
+```{r}
+data=read.csv("EurostatCrime2019.csv",row.names = 1)
+```
+
+### 2. Size and Structure of Dataset
+The dataset contains 41 rows and 13 columns and the structure of this dataset is shown below:
+```{r}
+nrow(data)
+ncol(data)
+str(data)
+```
+
+### 3. Produce appropriate commands 
+#### (i) Remove Columns of Rape & Sexual.assault
+For most countries, sexual violence figures are the sum of rape and sexual assault. Thus, I remove the columns Rape and Sexual.assault with below code:
+```{r}
+data1=subset(data, select = -c(Rape, Sexual.assault))
+```
+
+#### (ii) Remove Columns of Theft and Burglary
+For some countries, theft includes also burglary, and theft of motorised land vehicle, in others they are recorded separately. 
+In order to compare the different countries, I remove the columns involving theft and burglary with below code:
+```{r}
+data2=subset(data1,select=-c(Burglary,Theft,Burglary.of.private.residential.premises,Theft.of.a.motorized.land.vehicle))
+```
+
+#### (iii) Add column for overall offences
+I add a column containing the overall record of offences for each country (per hundred thousand inhabitants) and the new column name is "totaloffense":
+```{r}
+#I use 'rowSums' to add every rows and obtain the total offense:
+totaloffense  = rowSums(data2)
+#I combine "totaloffense" column to the dataset with below code
+data3=cbind(data2,totaloffense)
+```
+
+### 4. List the countries that contain any missing data
+Below are list of countries that contain any missing data:
+```{r}
+names(which(rowSums(is.na(data3))>0))
+```
+
+### 5. Remove the countries with missing data from the dataframe
+In below code, I remove the countries with missing data from the dataframe. The new dataset is called "data4".
+*dataset4* will be used in Analysis part
+```{r}
+data4 = na.omit(data3)
+```
+
+### 6. Observations and variables on the new dataframe
+After I remove the countries with missing data, the new dataframe has 22 rows and 8 columns (22 observations of 8 variables).
+```{r}
+nrow(data4)
+ncol(data4)
+str(data4)
+#I can show the dimension using dim as well:
+dim(data4)
+```
+
+## Task 2: Analysis
+### 1. Three most common crimes in Ireland in 2019
+With below code, I generate **the 3 most common crimes in Ireland in 2019**:
+```{r}
+#Firstly, I need to exclude "totaloffense" column
+excl_offense = subset(data4, select = -c(totaloffense) )
+#Secondly, I want to obtain Ireland's crimes only using below code
+ireland_crime=subset(excl_offense,rownames(excl_offense)=="Ireland")
+#Lastly, I want to know the 3 most common crimes with below code
+colnames(sort(ireland_crime, decreasing = TRUE)[1:3])
+```
+
+### 2. Proportion of the overall crimes was due to Assault in Ireland in 2019
+Below is the code for **proportion of the overall crimes that was due to Assault in Ireland in 2019**:
+```{r}
+#I want to obtain Ireland's crimes dataset only with below code:
+ireland_only<-subset(data4,rownames(data4)=="Ireland")
+#To generate the proportion of the overall crimes that was due to Assault in Ireland, I use below code
+ireland_only$Assault/ireland_only$totaloffense
+```
+
+### 3. Country with the highest record of kidnapping in 2019
+With below code, I generate **the highest record of kidnapping in 2019** (per hundred thousand inhabitants):
+```{r}
+highest_kidnapping<-rownames(data4[which.max(data4$Kidnapping),])
+highest_kidnapping
+```
+### 4. Country with the lowest overall record of offences in 2019 
+And **the lowest overall record of offences** in 2019 (per hundred thousand inhabitants):
+```{r}
+highest_offence<- rownames(data4[which.min(data4$totaloffense),])
+highest_offence
+```
+
+### 5. Plot displaying the relationship between robbery and unlawful acts involving controlled drugs or precursors
+Here, I show a plot displaying the relationship between robbery and unlawful acts.
+First, I load ggplot2 `library` function
+
+```{r}
+library("ggplot2")
+```
+
+With below code, I generate a scatterplot and regression line
+```{r, fig.height = 10, fig.width = 7, fig.align = "center"}
+ggplot(data = data4, aes(x = Robbery, y = Unlawful.acts.involving.controlled.drugs.or.precursors)) +
+        geom_point(color = "#DF4635") +
+        geom_smooth(method = "lm", se = FALSE, col = "#629CDF") +
+        labs(title = "Relationship between Robbery and Unlawful Acts \n Involving Controlled Drugs or Precursors", 
+             x = "Robbery",y = "Unlawful Acts")+
+        theme(plot.title = element_text(face="bold",hjust = 0.5), 
+        axis.title.x = element_text(face="italic", size = 10),
+        axis.title.y = element_text(face="italic",size= 10))
+```
+I would like to know the correlation between Robbery and Unlawful Acts. Thus, I generate below code and obtain a weak relationship between Robbery and Unlawful Acts with correlation of **0.1328638**.
+```{r}
+cor(data4$Robbery, data4$Unlawful.acts.involving.controlled.drugs.or.precursors)
+```
+
+## Task 3: Creativity
+For creativity part, I create 3 plots:
+
+### Plot 1
+
+```{r, fig.height = 10, fig.width = 7, fig.align = "center"}
+#I create a data frame called "df2" that consist of 22 observations and 2 variables: Country and Total Offense with below code:
+df <- data4                   
+df$country_name <- row.names(df)                    
+df2=data.frame(df$country_name,df$totaloffense)
+colnames(df2) <- c("Country", "TotalOffense")
+#The structure of "df2" shown below:
+str(df2)
+
+
+#I create a ascending barplot with below code:
+plot1=ggplot(data = df2, aes(x = reorder(Country, -TotalOffense), 
+                           y = TotalOffense, fill = Country)) +
+  geom_bar(stat = "identity", width = 0.75,fill= "#629CDF")+
+  coord_flip() +
+  labs(x = "Country", 
+       y = "Number of Crimes", 
+       title = "Crime Count by Euro Countries Year 2019 \n (per hundred thousand inhabitants)") +
+  theme(plot.title = element_text(face="bold",hjust = 0.5, size= 10), 
+        axis.title.x = element_text(face="italic", size = 10),
+        axis.title.y = element_text(face="italic", size = 10))
+plot1
+```
+The first plot shows overall record of offences in 2019 by the Euro Countries. It has X label as Number of Crimes (per hundred thousand inhabitants) and Y label as Countries. 
+
+From the graph, we can conclude that the top 3 highest record of offences were in **1) Switzerland, 2) Luxembourg, and 3) Finland**. And the 3 lowest record of offences were in **1) Romania, 2) Albania, and 3) Montenegro**.
+
+### Plot 2
+
+```{r, fig.height = 10, fig.width = 7, fig.align = "center"}
+#I create a data frame called "df5" that consist of 7 observations of 2 variables: Crime Category and TotalOffense with below code:
+df3<-excl_offense
+tdf3<-as.data.frame(t(as.matrix(df3)))
+totaloffense1<-rowSums(tdf3)
+df4<-cbind(tdf3,totaloffense1)
+df4$crime_name <- row.names(df4) 
+df5=data.frame(df4$crime_name,df4$totaloffense1)
+colnames(df5) <- c("Category", "TotalOffense")
+#The structure of df5 is shown below:
+str(df5)
+
+#I create a desceding barplot with below code:
+plot2= ggplot(data = df5, aes(x = reorder(Category, -TotalOffense), 
+                              y = TotalOffense, fill = Category)) + 
+  geom_bar(stat = "identity") + 
+  labs(x = "Category of Crime", y = "Number of Crimes", title = "Crime Category Count in Eurozone Year 2019 \n (per hundred thousand inhabitants)") +
+  theme(plot.title = element_text(face="bold",hjust = 0.5), 
+        axis.title.x = element_text(face="italic", size = 10),
+        axis.title.y = element_text(face="italic", size = 10))
+plot2 + theme(axis.text.x = element_text(angle = 40, vjust = 1, hjust=1))
+```
+
+
+The second plot shows the overall record of *Crime Category* in Europe zones in 2019 where the X label is the Crime's Category and Y label is the Number of Crimes (per hundred thousand inhabitants). From the graph, we can conclude that the highest record of offences in Euro zones on 2019 was **Unlawful Acts Involving Controlled Drugs or Precursors** while the lowest record of offences was **Kidnapping**
+
+### Plot 3
+
+```{r}
+#I load library reshape2 because I want to use the melt function 
+library(reshape2)
+```
+
+
+```{r, fig.height = 10, fig.width = 7, fig.align = "center"}
+#I create a data frame called "df7melt" that consist of 44 observations of 3 variables: Country, Homicide Variable and Number of Homicide Crime with below code:
+df6=subset(data4,select=-c(Assault,Kidnapping,Sexual.violence,Robbery,Unlawful.acts.involving.controlled.drugs.or.precursors,totaloffense))
+df6$countryname1 <- row.names(df6) 
+df7= data.frame(df6$countryname1,df6$Intentional.homicide,df6$Attempted.intentional.homicide)
+colnames(df7) <- c("CountryName", "Intentional Homicide","Attempted Intentional Homicide")
+df7melt<-melt(df7,id="CountryName")
+#The structure of df7melt shown below:
+str(df7melt)
+
+#I create a comparison barplot with below code:
+plot3=ggplot(data = df7melt, aes(x = CountryName, 
+                       y = value, fill = variable)) + 
+  geom_col(position = "dodge") + 
+  labs(x = "Country", y = "Number of Crimes", title = "Intentional Homicide vs Attempted Homicide \n in Eurozone Year 2019 \n (per hundred thousand inhabitants)") +
+  theme(plot.title = element_text(face="bold",hjust = 0.5), 
+        axis.title.x = element_text(face="italic", size = 10),
+        axis.title.y = element_text(face="italic", size = 10))
+plot3 + theme(axis.text.x = element_text(angle = 40, vjust = 1, hjust=1))
+
+```
+In the third plot, I would like to compare the number of crime between Intentional Homicide and Attempted Intentional Homicide Crimes in Eurozones in 2019. The X label is Country in Eurozone and Y label is Number of Crimes (per hundred thousand inhabitants). We can see in the graph that in **Most** Euro countries the crime of Attempted Intentional Homicide is more than Intentional Homicide. 
+Definition on Attempted Intentional Homicide and Intentional Homicide are shown in the reference section below.
+
+
+## Reference: 
+Link: https://ec.europa.eu/eurostat/cache/metadata/en/crim_off_cat_esms.htm
+
+*Intentional Homicide is defines as unlawful death inflicted upon a person with the intent to cause death or serious injury. It is also include murder, honour killing, serious assault leading to death, death as a result of terrorist activities, dowry-related killings, femicide, infanticide, voluntary manslaughter, extrajudicial killings, killings caused by excessive use of force by law enforcement/state officials.*
+
+*Attempted Intentional Homicide is defines as attempt to inflict unlawful death upon a person with the intent to cause death or serious injury. Data on attempted intentional homicide should also include attempted murder, attempt to inflict death as a result of terrorist activities, attempted infanticide, attempted femicide and exclude conspiracy to procure or commit illegal feticide.* 
+
+
+
+
