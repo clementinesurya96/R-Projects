@@ -33,12 +33,12 @@ trends among European countries in 2019.
 
 ### Part 2: Analysis
 In this task, the focus is on analyzing the dataset. The following questions are addressed:
-- Most Common Crimes in Ireland (2019): Determine the three most common crimes in Ireland in 2019 based on the dataset.
-- Proportion of Crimes Due to Assault in Ireland (2019):
+- Most Common Crimes in Ireland: Determine the three most common crimes in Ireland in 2019 based on the dataset.
+- Proportion of Crimes Due to Assault in Ireland:
 Calculate the proportion of overall crimes in Ireland that can be attributed to assault in 2019.
-- Country with Highest Record of Kidnapping (2019):
+- Country with Highest Record of Kidnapping:
 Identify the country with the highest record of kidnapping in 2019 per hundred thousand inhabitants.
-- Country with Lowest Overall Record of Offences (2019):
+- Country with Lowest Overall Record of Offences:
 Determine the country with the lowest overall record of offences in 2019 per hundred thousand inhabitants.
 - Relationship Between Robbery and Unlawful Acts Involving Controlled Drugs:
 Create a plot that displays the relationship between robbery and unlawful acts involving controlled drugs or precursors.
