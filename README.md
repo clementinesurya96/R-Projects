@@ -16,7 +16,9 @@ The repository is organized into separate directories, each representing a speci
 
 2. Statistical Machine Learning: Applying statistical models for regression, classification, clustering, and inference on datasets.
 
-3. Machine Learning Tasks: Tackling complex tasks like image recognition and recommendation systems using advanced algorithms.
+3. Multivariate Analysis: Analyzing datasets with multiple variables to uncover patterns and relationships. This includes techniques such as clustering and Principal Component Analysis (PCA).
+
+4. Machine Learning Tasks: Tackling complex tasks like image recognition and recommendation systems using advanced algorithms.
 
 ## 🚀 Getting Started
 
@@ -25,4 +27,3 @@ To explore a project:
 2. Follow instructions in the project-specific README file for environment setup, dataset acquisition, and code execution.
 
 Happy exploring and learning with R! 🎉
-
