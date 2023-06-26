@@ -1,0 +1,241 @@
+---
+title: "Association Rule Task"
+---
+
+```{r global_options, include = FALSE}
+knitr::opts_knit$set(root.dir = "/Users/clementine/Desktop/Github/R-Projects/ML - Association Rule Movie Recommendation")
+#Load necessary package
+library(knitr)
+options(digits=2)
+opts_chunk$set(echo=TRUE, 
+               warning=TRUE, 
+               message=TRUE,
+               cache = TRUE,
+               include = TRUE,
+               results = 'show',
+               error = TRUE)
+```
+
+```{r}
+#Load necessary package
+library(ggplot2); library(ggiraph); library(ggiraphExtra); library(RColorBrewer); library(arules)
+```
+
+
+### Description of Data
+The file data being used `data_movielens_hw1.csv` contains viewing and liking patterns of 24,857 subscribers, concerning 3,222 movies over the period of 3 years (2016-2018). If a user has given a rating of 4 or more (out of 5), the user has liked the movie and it is included in the dataset.\
+
+The data contains 163938 observations and 2 columns (UserId and Title). Both columns will be used in the analysis, where:\
+
+- UserId, that is recorder as "transaction"\
+- Title, as "items", which contains information about the liked movie from each user in a particular year\
+
+```{r}
+df1 <- read.csv("data_movielens_hw1.csv")  # load the data and store it as "df1"
+dim(df1) # present data dimension
+head(df1) # print first 6 row of the data
+length(unique(df1$userId)) # compute the total count of unique subscriber
+length(unique(df1$title)) # compute the total count of unique movie
+```
+
+
+Below, I run the following commands to read the data in transactional format:
+```{r}
+# Read the data in transactional format
+tr_data <- read.transactions("data_movielens_hw1.csv", format = "single",
+sep = ",", cols = c("userId", "title"), header = TRUE)
+```
+
+Before mining the rules, we will look at the 10 most frequent items from the transactions.
+```{r}
+# Create plot for 10 most frequent items
+itemFrequencyPlot(tr_data, topN = 10, col=brewer.pal(8,'Pastel2'))
+```
+
+The movie Deadpool appears to be the most frequent item in all transactions followed by Arrival and Zootopia. Let’s see if this superiority is reflected in the association rules.\
+
+### Choosing the hyperparameters for apriori function
+Here I try different values of support and confidence and see graphically how many rules are generated for each combination to determine the support and confidence value for manageable size rules. However, I set the minimum size of the rule to 3, since we want to develop movie recommendation according to its association with at least two other movies.\
+```{r echo = T, results = 'hide'}
+# Support and confidence values
+supportLevels <- c(0.1, 0.05, 0.04, 0.03, 0.02, 0.01) # create different support levels in a vector
+confidenceLevels <- c(0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1) # create different confidence levels in a vector
+
+# Empty integers to store number of rules in each confidence level
+rules_sup10 <- integer(length=9)
+rules_sup5 <- integer(length=9)
+rules_sup4 <- integer(length=9)
+rules_sup3 <- integer(length=9)
+rules_sup2 <- integer(length=9)
+rules_sup1 <- integer(length=9)
+
+# Create for loop to try different values of support and confidence
+# Apriori algorithm with a support level of 10%
+for (i in 1:length(confidenceLevels)) {
+  
+  rules_sup10[i] <- length(apriori(tr_data, parameter=list(sup=supportLevels[1], 
+                                   conf=confidenceLevels[i], minlen = 3)))
+  
+}
+
+# Apriori algorithm with a support level of 5%
+for (i in 1:length(confidenceLevels)){
+  
+  rules_sup5[i] <- length(apriori(tr_data, parameter=list(sup=supportLevels[2], 
+                                  conf=confidenceLevels[i], minlen = 3)))
+  
+}
+
+# Apriori algorithm with a support level of 4%
+for (i in 1:length(confidenceLevels)){
+  
+  rules_sup4[i] <- length(apriori(tr_data, parameter=list(sup=supportLevels[3], 
+                                  conf=confidenceLevels[i], minlen = 3)))
+  
+}
+
+# Apriori algorithm with a support level of 3%
+for (i in 1:length(confidenceLevels)){
+  
+  rules_sup3[i] <- length(apriori(tr_data, parameter=list(sup=supportLevels[4], 
+                                  conf=confidenceLevels[i], minlen = 3)))
+  
+}
+
+# Apriori algorithm with a support level of 2%
+for (i in 1:length(confidenceLevels)){
+  
+  rules_sup2[i] <- length(apriori(tr_data, parameter=list(sup=supportLevels[5], 
+                                  conf=confidenceLevels[i], minlen = 3)))
+  
+}
+
+# Apriori algorithm with a support level of 1%
+for (i in 1:length(confidenceLevels)){
+  
+  rules_sup1[i] <- length(apriori(tr_data, parameter=list(sup=supportLevels[6], 
+                                  conf=confidenceLevels[i], minlen = 3)))
+  
+}
+```
+
+```{r}
+# Create data frame to store the number of rules created above and the confidence levels
+num_rules <- data.frame(rules_sup10, rules_sup5, rules_sup4, rules_sup3, rules_sup2, rules_sup1, confidenceLevels)
+
+# Create plot for number of rules found with a support level of 10%, 5%, 4%, 3%, 2%, and 1% as the y axis
+# and confidence level as the x axis
+ggplot(data=num_rules, aes(x=confidenceLevels)) +
+  
+  # Plot line and points (support level of 10%)
+  geom_line(aes(y=rules_sup10, colour="Support level of 10%")) + 
+  geom_point(aes(y=rules_sup10, colour="Support level of 10%")) +
+  
+  # Plot line and points (support level of 5%)
+  geom_line(aes(y=rules_sup5, colour="Support level of 5%")) +
+  geom_point(aes(y=rules_sup5, colour="Support level of 5%")) +
+  
+  # Plot line and points (support level of 4%)
+  geom_line(aes(y=rules_sup4, colour="Support level of 4%")) +
+  geom_point(aes(y=rules_sup4, colour="Support level of 4%")) +
+  
+  # Plot line and points (support level of 3%)
+  geom_line(aes(y=rules_sup3, colour="Support level of 3%")) +
+  geom_point(aes(y=rules_sup3, colour="Support level of 3%")) +
+  
+  # Plot line and points (support level of 2%)
+  geom_line(aes(y=rules_sup2, colour="Support level of 2%")) +
+  geom_point(aes(y=rules_sup2, colour="Support level of 2%")) +
+  
+  # Plot line and points (support level of 1%)
+  geom_line(aes(y=rules_sup1, colour="Support level of 1%")) + 
+  geom_point(aes(y=rules_sup1, colour="Support level of 1%")) +
+  
+  
+  # Labs and theme
+  labs(x="Confidence levels", y="Number of rules found", 
+       title="Apriori algorithm with different support levels") +
+  theme_bw() +
+  theme(legend.title=element_blank())
+```
+
+Here, I analyze the result:\
+- Support level 5% and 10%, we do not identify any rules.\
+- Support level of 3-4%, we only identify a few rules with very low confidence levels.\
+- Support level of 2%, we start to get manageable size rules with confidence level of 50%.\
+- Support level of 1%, we still get dozens of rules here.\
+
+To sum up, I choose support level of 2%, meaning that the rule must occur in at least 2% of the transactions in order to be considered for inclusion in the final set of rules and a confidence level of 60%, meaning that the antecedent of the rule (the left-hand side) must be associated with the consequent (the right-hand side) at least 60% of the time. Furthermore, I also set the minimum size of the rule to 3, to develop movie recommendation according to its association with at least two other movies.
+
+```{r}
+# Run the apriori algorithm on the transaction data with the selected hyperparameters
+rules <- apriori(tr_data, 
+                parameter = list(support = 0.02, 
+                                 confidence = 0.6, 
+                                 minlen = 3))
+```
+
+From the summary we can infer the following:\
+
+- 234 rules were formed\
+- Minimum and maximum values for support, confidence and lift are displayed\
+- Out of the 234 rules formed the counts of rule length is also displayed\
+
+```{r}
+# Print the summary rules
+summary(rules)
+```
+
+
+Let’s sort the rules based on confidence levels.
+```{r}
+# Print the first 6 rows of rules and sort by the highest confidence level
+print(inspect(head(sort(rules, by="confidence", decreasing = "TRUE"))))
+```
+
+
+We can see that the movie Deadpool is being mentioned many times, where we can conclude that it is in good agreement with the most frequency that we obtain in support rates part.\
+
+Moreover, it interesting to see that the rules are mostly combinations of Marvel Cinematic Universe movies. This is probably because most of the person who watched in the platform are Marvel fans.\
+
+With having highest confidence, we can infer that 83% that a person already watch Doctor Strange, Logan, Guardians of the Galaxy 2/Captain America will watch Deadpool. \
+
+Here, I will sorted the rules by lift levels.\
+```{r}
+# Print the first 6 rows of rules and sort by the highest lift level
+print(inspect(head(sort(rules, by="lift", decreasing = "TRUE"))))
+```
+
+A lift value greater than one indicates that items in RHS are more likely to be watched and liked with items on LHS. Similarly a lift value lesser than one implies that items in RHS are unlikely to be watched and liked with items in LHS.\
+
+In the above first transaction, we can conclude that Untitled Spider-Man Reboot are being watched and liked ten times more with Captain America: Civil War and Thor: Ragnarok than it being watched and liked alone.\
+
+Moreover, I would like to inspect the data by standardized lift because lift itself is susceptible to noise in small databases. Rare itemsets with low counts (low probability), which by chance occur a few times (or only once) together, can produce enormous lift values.\
+
+Here, I compute the standardized lift formula and form a new data frame that merge the standardized lift value with other association rules metrics *using the formula from the Lab*.\
+```{r}
+qual<-quality(rules) # extract quality measures
+pA <- qual$coverage 
+pB <- qual$confidence/qual$lift
+# compute lift upper and lower bounds
+U <- apply(cbind(1/pA, 1/pB), 1, min)
+L <- apply(cbind(1/pA + 1/pB - 1/(pA*pB), 0.02/(pA*pB), 0.6/pB, 0), 1, max)
+std_lift <- (qual$lift - L)/(U - L) # standardized lift 
+df2 <- data.frame(rule = labels(rules), 
+                 lift=qual$lift,L,U,std_lift) # print rules and associated metrics and store it as a dataframe "df2"
+```
+
+```{r}
+df3 <- df2[order(df2$std_lift, decreasing=TRUE),] # create df3 with sorted standardized lift by the highest number
+print(head(df3,10)) # print the first 6 rows of df3
+```
+
+By sorting the standardized lift, we can see in the first transaction, Deadpool are being watched and liked more with Doctor Strange, Guardians of the Galaxy 2, Logan than it being watched and liked alone (with standardized lift of 0.55). From this, we can see that our standardized lift is in good agreement with our finding by using the confidence metric.\
+
+## Summary
+- There are many Marvel superhero movie lovers in the platform as being seen in the interesting rules that we obtained above are all Marvel superhero movies.\
+- This is make sense because Marvel movies are always connected/related with each other. For example: before watching Thor Ragnarok, people will watch Guardians of Galaxy 2 (released before Thor Ragnarok) first because in Thor Ragnarok there will be a part that is connected with Guardians of Galaxy 2. Thus, people will mostly watch all superhero films to keeping in track with the storyline before watching new released Marvel movies.\
+
+
+## References
+Market Basket Analysis. Available at: https://rpubs.com/CFernandez/686167 (Accessed: February 25, 2023). 
