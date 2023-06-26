@@ -1,0 +1,222 @@
+---
+title: "Logistic Regression & Classification Tree for Predicting Match in Dating App"
+author: "Clementine Surya & 22200226"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_knit$set(root.dir = "/Users/clementine/Desktop/Github/R-Projects/ML - Predict Match in Dating App Using Logistic Regression and Classification Tree")
+knitr::opts_chunk$set(echo = TRUE)
+library(ROCR)
+```
+
+### Introduction
+In this part, the company developing a new speed dating app wants to build a machine learning system that can match individuals based on the input variables in the data. The task requires fitting a logistic regression model and a classification tree using the data and then comparing their predictive performance using the data_test.
+
+First, we load and prepare the dataset:
+```{r}
+# Prepare the data running the following lines of code. 
+# Note that the data are split into two sets: one used to fit the models, the other used for predictions and assessment
+data_speed <- read.csv("data_speed_dating.csv", sep = ";")
+n <- nrow(data_speed)
+set.seed(2023)
+set <- sample(1:n, 2290)
+data_test <- data_speed[set,]    # for assessing the predictive performance
+data <- data_speed[-set,]        # for fitting the models
+```
+
+After that, we create the model.
+
+### Model creation - Logistic Regression
+When evaluating the performance of the models, the company is primarily interested in the ability of the models to correctly identify positive matches between users. Therefore, we identify the optimal threshold $\tau$ related to the precision/recall curve and the $F_{1}$ score. In this case, the optimal value of $\tau$ is the one that maximizes the $F_{1}$ score.
+
+```{r}
+# Change "match" column in the train and test sets to binary 1/0 values
+data$match <-  ifelse(data$match == "yes", 1,0)
+data_test$match <- ifelse(data_test$match == "yes", 1,0)
+# Change "gender" column in the train and test sets to factor
+data$gender <- factor(data$gender, labels = c("f", "m")) 
+data_test$gender <- factor(data_test$gender, labels = c("f", "m"))
+```
+
+Here, I fit the logistic regression model and find the optimal threshold for classification. Then, I show the confusion matrix to show the predictive performance and show the accuracy, sensitivity, specificity, and precision.
+```{r}
+# Fit logistic regression model with `match` as the response variable and all other variables as predictors
+fit_logit <- glm(match ~ ., data = data, family = binomial) 
+summary(fit_logit) # Print summary statistics of the logistic regression model
+
+pred_obj <- prediction(fitted(fit_logit), data$match) # Create prediction object with the fitted values from the logistic regression model and the `match` variable
+perf_f <- performance(pred_obj, "f") # Compute the performance of the prediction object in terms of f-measure
+tau <- perf_f@x.values[[1]] # Extract tau from the performance object
+f <- perf_f@y.values[[1]] # Extract f-measure from the performance object
+best_pr <- which.max(f) # Find the threshold that maximizes the f-measure
+
+# Plot the f-measure as a function of tau, and mark the threshold that maximizes the f-measure
+plot(tau, f, type = "l", main = "F-Measure as a Function of Tau Plot (1.1)")
+points(tau[best_pr], f[best_pr], pch = 19, col = adjustcolor("darkorange2", 0.5))
+tau[best_pr] # Return the threshold that maximizes the f-measure
+
+# Classification for optimal tau
+# Predict the response variable using the fitted model
+pred_logit <- predict(fit_logit, data_test, type="response")
+
+# If the predicted value is greater optimal assign 1, if else 0
+pred_logit_out <- ifelse(pred_logit > tau[best_pr], 1, 0)
+
+# Create a confusion matrix of predicted vs actual values
+logit_mat <- table(Actualvalue = data_test$match, Predictedvalue=pred_logit_out)
+logit_mat # show the confusion matrix
+
+# Calculate the accuracy of the model using the confusion matrix
+logit_acc <- sum(diag(logit_mat)) / sum(logit_mat)
+
+# Calculate the sensitivity of the model using the confusion matrix
+logit_sens <- logit_mat[2, 2] / sum(logit_mat[2, ])
+
+# Calculate the specificity of the model using the confusion matrix
+logit_spec <- logit_mat[1, 1] / sum(logit_mat[1, ])
+
+# Calculate the precision of the model using the confusion matrix
+logit_prec <- logit_mat[2,2]/sum(logit_mat[,2])
+
+# Print the accuracy, sensitivity, specificity, and precision of the model
+cat("Accuracy:", logit_acc)
+cat("\nSensitivity:", logit_sens)
+cat("\nSpecificity:", logit_spec)
+cat("\nPrecision:", logit_prec)
+
+# Create a prediction object using the predicted response and actual values of the test data
+pred_obj_logit <- prediction(pred_logit_out, data_test$match)
+
+# Calculate the TPR and FPR values for the ROC curve
+roc_logit <- performance(pred_obj_logit,'tpr','fpr')
+
+# Plot the ROC curve
+plot(roc_logit, main = "ROC Curve (1.2)")
+
+# Add the bisecting line to the plot
+abline(0, 1, col = "darkorange2", lty = 2) 
+
+# Calculate the area under the ROC curve (AUC)
+auc_logit <- performance(pred_obj_logit, "auc")
+
+# Print the AUC value
+auc_logit@y.values
+
+# produce precision/recall curve
+pr_logit <- performance(pred_obj_logit, "prec", "rec")
+plot(pr_logit, main = "Recall vs Precision Curve (1.3)") # show the precision and recall curve
+
+# compute area under the PR curve
+aucpr_logit <- performance(pred_obj_logit, "aucpr")
+aucpr_logit@y.values
+```
+```{r}
+library(ROCR)
+roc <- performance(pred_obj, "tpr", "fpr")
+plot(roc)
+abline(0, 1, col = "darkorange2", lty = 2) # add bisect line
+# compute the area under the ROC curve
+auc <- performance(pred_obj, "auc")
+auc@y.values
+# note that we access the value of auc in the list with '@'
+# this is because the object-list is of class S4
+
+sens <- performance(pred_obj, "sens")
+spec <- performance(pred_obj, "spec")
+tau <- sens@x.values[[1]]
+sens_spec <- sens@y.values[[1]] + spec@y.values[[1]]
+best_roc <- which.max(sens_spec)
+plot(tau, sens_spec, type = "l")
+points(tau[best_roc], sens_spec[best_roc], pch = 19, col = adjustcolor("darkorange2", 0.5))
+tau[best_roc] # optimal tau according to the ROC curve
+```
+
+
+### Model creation - Classification Tree
+First, I convert target variable match to factor
+```{r}
+# Change "match" column in the train and test sets factor
+data$match <- factor(data$match , labels = c("no","yes")) 
+data_test$match <- factor(data_test$match , labels = c("no","yes")) 
+```
+
+Here, I fit the logistic regression model and find the optimal threshold for classification. Then, I show the confusion matrix to show the predictive performance and show the accuracy, sensitivity, specificity, and precision.
+```{r}
+# Load the rpart and rpart.plot packages to create and visualize decision trees
+library(rpart)
+library(rpart.plot)
+
+# Fit a decision tree using the rpart function
+fit_ct <- rpart(match~., data = data, method = 'class')
+
+# Predict the response variable using the fitted decision tree
+phat <- predict(fit_ct, type = "prob")
+
+pred_obj_ct <- prediction(phat[,2], data$match) # Create prediction object with the fitted values from the logistic regression model and the `match` variable
+perf_f_ct <- performance(pred_obj_ct, "f") # Compute the performance of the prediction object in terms of f-measure
+tau_ct <- perf_f_ct@x.values[[1]] # Extract tau from the performance object
+f_ct <- perf_f_ct@y.values[[1]] # Extract f-measure from the performance object
+best_pr_ct <- which.max(f_ct) # Find the threshold that maximizes the f-measure
+# Plot the f-measure as a function of tau, and mark the threshold that maximizes the f-measure
+plot(tau_ct, f_ct, type = "l", main = "F-Measure as a Function of Tau Plot (2.1)")
+points(tau_ct[best_pr_ct], f_ct[best_pr_ct], pch = 19, col = adjustcolor("darkorange2", 0.5))
+tau_ct[best_pr_ct] # Return the threshold that maximizes the f-measure
+
+# Classification for optimal tau
+# Predict the probability using the fitted model
+pred_ct <- predict(fit_ct, data_test, type = "prob")[,2]
+
+# If the predicted value is greater then optimal assign 1, if else 0
+pred_ct_out <- ifelse(pred_ct > tau_ct[best_pr_ct], 1, 0)
+
+# Create a confusion matrix of predicted vs actual values
+ct_mat <- table(Actualvalue = data_test$match, Predictedvalue=pred_ct_out)
+ct_mat # show the confusion matrix
+
+# Calculate the accuracy of the model using the confusion matrix
+ct_acc <- sum(diag(ct_mat)) / sum(ct_mat)
+
+# Calculate the sensitivity of the model using the confusion matrix
+ct_sens <-ct_mat[2, 2] / sum(ct_mat[2, ])
+
+# Calculate the specificity of the model using the confusion matrix
+ct_spec <- ct_mat[1, 1] / sum(ct_mat[1, ])
+
+# Calculate the precision of the model using the confusion matrix
+ct_prec <- ct_mat[2,2]/sum(ct_mat[,2])
+
+# Print the accuracy, sensitivity, specificity, and precision of the model
+cat("Accuracy:", ct_acc)
+cat("\nSensitivity:", ct_sens)
+cat("\nSpecificity:", ct_spec)
+cat("\nPrecision:", ct_prec)
+
+# Calculate the TPR and FPR values for the ROC curve
+roc_ct <- performance(pred_obj_ct,'tpr','fpr')
+
+# Plot the ROC curve
+plot(roc_ct, main = "ROC Curve (2.2)")
+
+# Add the bisecting line to the plot
+abline(0, 1, col = "darkorange2", lty = 2) 
+
+# Calculate the area under the ROC curve (AUC)
+auc_ct <- performance(pred_obj_ct , "auc")
+auc_ct@y.values
+
+# produce precision/recall curve
+pr_ct <- performance(pred_obj_ct, "prec", "rec")
+plot(pr_ct, main = "Recall vs Precision Curve (2.3)") # show the precision and recall curve
+
+# compute area under the PR curve
+aucpr_ct <- performance(pred_obj_ct, "aucpr")
+aucpr_ct@y.values
+```
+
+The task was to assess and compare the predictive performance of two classifiers using data_test. The company developing the app is primarily interested in the ability of the models to correctly identify positive matches between users, so both sensitivity and precision are of particular importance. The performance metrics of both models indicate that they do not achieve high predictive sensitivity and precision in detecting positive matches between users. \
+
+The logistic regression classifier achieved an accuracy of 80%, sensitivity of 66%, specificity of 83%, and precision of 46%. On the other hand, the classification tree classifier achieved an accuracy of 81%, sensitivity of 54%, specificity of 86%, and precision of 46%. Both models performed similarly in terms of accuracy, specificity, and precision, but there were differences in sensitivity. **Logistic regression had a higher sensitivity compared to classification tree, which is desirable for correctly identifying positive matches between users**.\
+
+In addition, the ROC-AUC and PR-AUC values for both models were also evaluated. The logistic regression model had a ROC-AUC of 0.75 and PR-AUC of 0.48, while the classification tree model had a ROC-AUC of 0.76 and PR-AUC of 0.46. Overall, both models had similar ROC-AUC values whereas based on the PR-AUC values, **the logistic regression model had a slightly higher value of 0.48 compared to the classification tree model's value of 0.46**.\ **This suggests that the logistic regression model slightly better at accurately identify positive matches while minimizing the number of incorrect matches compared to classification tree model**.\
