@@ -9,7 +9,7 @@ Welcome to my **R-Projects Compilation Repository**! This repository contains a 
 The repository is organized into separate directories, each representing a specific project. Within each project directory, you'll find:
 
 - **Data**: Datasets used in the project.
-- **Code**: R scripts and notebooks demonstrating implementation of techniques for data collection, data cleaning and preparation, data transformation and feature engineering, data analysis (building statistical model using data science and machine learning techniques), and deriving insights and visualizations.
+- **Code**: R scripts demonstrating implementation of techniques for data collection, data cleaning and preparation, data transformation and feature engineering, data analysis (building statistical model using data science and machine learning techniques), and deriving insights and visualizations.
 - **Documentation**: Project summaries, methodologies, and analysis reports.
 
 ## 🚀 Getting Started
