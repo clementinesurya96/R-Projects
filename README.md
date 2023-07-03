@@ -2,26 +2,15 @@
 
 Welcome to my **R-Projects Compilation Repository**! This repository contains a collection of projects focused on exploratory data analysis, statistical machine learning, multivariate analysis, and machine learning tasks. Each project showcases the application of the R programming language in data-driven tasks.
 
-### Please refer to the PDF document version in each folder for insights and visualizations
+### Please refer to the PDF document version in each folders for insights and visualizations
 
-
-## 🌟 Project Structure
+## 🌟 Project Structure and Overview
 
 The repository is organized into separate directories, each representing a specific project. Within each project directory, you'll find:
 
 - **Data**: Datasets used in the project.
-- **Code**: R scripts and notebooks demonstrating implementation of techniques for exploratory data analysis, statistical machine learning, and machine learning tasks.
+- **Code**: R scripts and notebooks demonstrating implementation of techniques for data collection, data cleaning and preparation, data transformation and feature engineering, data analysis (building statistical model using data science and machine learning techniques), and deriving insights and visualizations.
 - **Documentation**: Project summaries, methodologies, and analysis reports.
-
-## 📚 Projects Overview
-
-1. Exploratory Data Analysis (EDA): Visualizing and understanding datasets, including data cleaning, feature engineering, and visualization techniques.
-
-2. Statistical Machine Learning: Applying statistical models for regression, classification, clustering, and inference on datasets.
-
-3. Multivariate Analysis: Analyzing datasets with multiple variables to uncover patterns and relationships. This includes techniques such as clustering and Principal Component Analysis (PCA).
-
-4. Machine Learning Tasks: Tackling complex tasks like image recognition and recommendation systems using advanced algorithms.
 
 ## 🚀 Getting Started
 
