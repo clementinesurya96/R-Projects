@@ -2,7 +2,7 @@
 
 Welcome to my **R-Projects Compilation Repository**! This repository contains a collection of projects focused on exploratory data analysis, statistical machine learning, multivariate analysis, and machine learning tasks. Each project showcases the application of the R programming language in data-driven tasks.
 
-**(Please refer to the PDF document version in each folder for the insights!)**
+# (Please refer to the PDF document version in each folder for the insights!)
 
 ## 🌟 Project Structure
 
